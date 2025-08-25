@@ -1,0 +1,67 @@
+
+Name : Dina Adel Shiha
+ID: 309880
+
+Code python for image processing task
+
+import cv2
+import numpy as np
+
+def inspect_gear(ideal_path, sample_path):
+    ideal_img = cv2.imread(ideal_path, cv2.IMREAD_GRAYSCALE)
+    sample_img = cv2.imread(sample_path, cv2.IMREAD_GRAYSCALE)
+
+    
+    if ideal_img is None or sample_img is None:
+        print(f"Error: Could not load images. Check paths.")
+        return
+
+    # Thresholding
+    _, ideal_thresh = cv2.threshold(ideal_img, 128, 255, cv2.THRESH_BINARY_INV)
+    _, sample_thresh = cv2.threshold(sample_img, 128, 255, cv2.THRESH_BINARY_INV)
+
+   
+    diff_img = cv2.bitwise_xor(ideal_thresh, sample_thresh)
+
+   
+    contours, _ = cv2.findContours(diff_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+  
+    num_defects = len(contours)
+    if num_defects == 0:
+        print(f"{sample_path}: No defects found (Normal gear).")
+    else:
+        
+        print(f"{sample_path}: Detected {num_defects} potential defects.")
+        
+
+
+    contours_sample, _ = cv2.findContours(sample_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+  
+    if len(contours_sample) >= 2:
+        # Sort contours by area in descending order
+        contours_sample = sorted(contours_sample, key=cv2.contourArea, reverse=True)
+        
+       
+        (x, y), radius_sample = cv2.minEnclosingCircle(contours_sample[1])
+        diameter_sample = 2 * radius_sample
+
+      
+        contours_ideal, _ = cv2.findContours(ideal_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours_ideal = sorted(contours_ideal, key=cv2.contourArea, reverse=True)
+        if len(contours_ideal) >= 2:
+            (x, y), radius_ideal = cv2.minEnclosingCircle(contours_ideal[1])
+            diameter_ideal = 2 * radius_ideal
+
+            if abs(diameter_sample - diameter_ideal) < some_small_threshold:
+                print(f"Inner diameter of {sample_path} is identical to ideal.")
+            elif diameter_sample > diameter_ideal:
+                print(f"Inner diameter of {sample_path} is larger than ideal.")
+            else:
+                print(f"Inner diameter of {sample_path} is smaller than ideal.")
+        else:
+            print("Could not detect inner diameter in ideal gear.")
+    else:
+        print("Could not detect inner diameter in sample gear.")
+
